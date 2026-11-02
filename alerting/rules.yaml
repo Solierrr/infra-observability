@@ -1,0 +1,1024 @@
+apiVersion: 1
+groups:
+- orgId: 1
+  name: SOLIER — P1 (agir já)
+  folder: SOLIER
+  interval: 1m
+  rules:
+  - uid: solier-a02
+    title: A02 Erros 5xx acima de 10 %
+    condition: C
+    for: 2m
+    noDataState: OK
+    execErrState: OK
+    isPaused: false
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: ((((100 * (sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",status=~"5..",service_name=~"auth|core|messager|api-notify"}[5m]))
+          or 0 * sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m])))
+          / (sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m]))
+          > 0))) > 10) and on(service_name,deployment_environment) ((sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m])))
+          > 0.05)) or ((((100 * (sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",http_status_code=~"5..",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m]))
+          or 0 * sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m])))
+          / (sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m]))
+          > 0))) > 10) and on(service_name,deployment_environment) ((sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m])))
+          > 0.05))
+        datasource:
+          type: prometheus
+          uid: prometheus
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+        datasource:
+          type: __expr__
+          uid: __expr__
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        datasource:
+          type: __expr__
+          uid: __expr__
+    annotations:
+      summary: '{{ $labels.service_name }} ({{ $labels.deployment_environment }}): {{ printf "%.1f" $values.B.Value }} % de respostas 5xx'
+      description: Taxa de erros 5xx acima de 10 % por 2 minutos, com tráfego mínimo de 0,05 req/s.
+      impact: 'Mais de 1 em cada 10 requisições falha: o serviço está praticamente quebrado.'
+      first_steps: 1. Abrir o dashboard do serviço e achar a rota com mais erro. 2. Ver os logs de erro e os traces com erro. 3. Checar a última
+        publicação do serviço.
+      dashboard: '{{ if or (eq $labels.service_name "auth") (eq $labels.service_name "core") (eq $labels.service_name "messager") (eq $labels.service_name
+        "api-notify") }}/d/solier-servico-java{{ else }}/d/solier-servico-python{{ end }}?var-service={{ $labels.service_name }}&var-environment={{
+        $labels.deployment_environment }}'
+    labels:
+      alert_id: A02
+      priority: P1
+      category: erros
+      team: solier
+      escalation_group: erro-5xx
+  - uid: solier-a03
+    title: A03 Erros 5xx sustentados
+    condition: C
+    for: 0s
+    noDataState: OK
+    execErrState: OK
+    isPaused: false
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: (((min_over_time(((100 * (sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",status=~"5..",service_name=~"auth|core|messager|api-notify"}[5m]))
+          or 0 * sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m])))
+          / (sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m]))
+          > 0)))[10m:1m]) >= 5) unless (((100 * (sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",status=~"5..",service_name=~"auth|core|messager|api-notify"}[5m]))
+          or 0 * sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m])))
+          / (sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m]))
+          > 0))) > 10)) and on(service_name,deployment_environment) ((sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m])))
+          > 0.05)) or (((min_over_time(((100 * (sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",http_status_code=~"5..",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m]))
+          or 0 * sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m])))
+          / (sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m]))
+          > 0)))[10m:1m]) >= 5) unless (((100 * (sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",http_status_code=~"5..",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m]))
+          or 0 * sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m])))
+          / (sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m]))
+          > 0))) > 10)) and on(service_name,deployment_environment) ((sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m])))
+          > 0.05))
+        datasource:
+          type: prometheus
+          uid: prometheus
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+        datasource:
+          type: __expr__
+          uid: __expr__
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        datasource:
+          type: __expr__
+          uid: __expr__
+    annotations:
+      summary: '{{ $labels.service_name }} ({{ $labels.deployment_environment }}): {{ printf "%.1f" $values.B.Value }} % de respostas 5xx há 10
+        min'
+      description: Taxa de erros 5xx de 5 % ou mais durante 10 minutos seguidos (e até 10 %; acima disso vale o alerta A02).
+      impact: 'Pelo menos 1 em cada 20 requisições falha há 10 minutos: degradação contínua.'
+      first_steps: Mesmos passos do A02. Confirmar se começou depois de uma publicação.
+      dashboard: '{{ if or (eq $labels.service_name "auth") (eq $labels.service_name "core") (eq $labels.service_name "messager") (eq $labels.service_name
+        "api-notify") }}/d/solier-servico-java{{ else }}/d/solier-servico-python{{ end }}?var-service={{ $labels.service_name }}&var-environment={{
+        $labels.deployment_environment }}'
+    labels:
+      alert_id: A03
+      priority: P1
+      category: erros
+      team: solier
+      escalation_group: erro-5xx
+- orgId: 1
+  name: SOLIER — P2 (poucas horas)
+  folder: SOLIER
+  interval: 1m
+  rules:
+  - uid: solier-a01
+    title: A01 Serviço sem dados
+    condition: C
+    for: 5m
+    noDataState: OK
+    execErrState: OK
+    isPaused: false
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: (count by (service_name,deployment_environment) (last_over_time(http_server_requests_milliseconds_count{deployment_environment="prod",service_name=~"auth|core|messager|api-notify"}[1h]))
+          unless count by (service_name,deployment_environment) (http_server_requests_milliseconds_count{deployment_environment="prod",service_name=~"auth|core|messager|api-notify"}))
+          or (count by (service_name,deployment_environment) (last_over_time(http_server_duration_milliseconds_count{deployment_environment="prod",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[1h]))
+          unless count by (service_name,deployment_environment) (http_server_duration_milliseconds_count{deployment_environment="prod",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}))
+        datasource:
+          type: prometheus
+          uid: prometheus
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+        datasource:
+          type: __expr__
+          uid: __expr__
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        datasource:
+          type: __expr__
+          uid: __expr__
+    annotations:
+      summary: '{{ $labels.service_name }} ({{ $labels.deployment_environment }}) parou de enviar telemetria'
+      description: Enviava métricas na última hora e não envia mais há 5 minutos.
+      impact: O serviço pode estar fora do ar ou sem conexão com o collector. Quem depende dele recebe erro.
+      first_steps: 1. Ver se o pod está de pé (kubectl get pods). 2. Ver os logs do pod. 3. Ver se o collector recebe dados (painel Saúde geral).
+      dashboard: '{{ if or (eq $labels.service_name "auth") (eq $labels.service_name "core") (eq $labels.service_name "messager") (eq $labels.service_name
+        "api-notify") }}/d/solier-servico-java{{ else }}/d/solier-servico-python{{ end }}?var-service={{ $labels.service_name }}&var-environment={{
+        $labels.deployment_environment }}'
+    labels:
+      alert_id: A01
+      priority: P2
+      category: disponibilidade
+      team: solier
+  - uid: solier-a04
+    title: A04 Erros 5xx altos
+    condition: C
+    for: 5m
+    noDataState: OK
+    execErrState: OK
+    isPaused: false
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: (((((100 * (sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",status=~"5..",service_name=~"auth|core|messager|api-notify"}[5m]))
+          or 0 * sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m])))
+          / (sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m]))
+          > 0))) >= 5) unless (((100 * (sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",status=~"5..",service_name=~"auth|core|messager|api-notify"}[5m]))
+          or 0 * sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m])))
+          / (sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m]))
+          > 0))) > 10) unless (min_over_time(((100 * (sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",status=~"5..",service_name=~"auth|core|messager|api-notify"}[5m]))
+          or 0 * sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m])))
+          / (sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m]))
+          > 0)))[10m:1m]) >= 5)) and on(service_name,deployment_environment) ((sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m])))
+          > 0.05)) or (((((100 * (sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",http_status_code=~"5..",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m]))
+          or 0 * sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m])))
+          / (sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m]))
+          > 0))) >= 5) unless (((100 * (sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",http_status_code=~"5..",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m]))
+          or 0 * sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m])))
+          / (sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m]))
+          > 0))) > 10) unless (min_over_time(((100 * (sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",http_status_code=~"5..",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m]))
+          or 0 * sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m])))
+          / (sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m]))
+          > 0)))[10m:1m]) >= 5)) and on(service_name,deployment_environment) ((sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m])))
+          > 0.05))
+        datasource:
+          type: prometheus
+          uid: prometheus
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+        datasource:
+          type: __expr__
+          uid: __expr__
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        datasource:
+          type: __expr__
+          uid: __expr__
+    annotations:
+      summary: '{{ $labels.service_name }} ({{ $labels.deployment_environment }}): {{ printf "%.1f" $values.B.Value }} % de respostas 5xx'
+      description: Taxa de erros 5xx de 5 % ou mais por 5 minutos, ainda sem ter completado 10 minutos nem passado de 10 %.
+      impact: Início de um problema de erros; ainda pode ser um pico.
+      first_steps: 1. Acompanhar por mais 5 minutos. 2. Se persistir, vira P1 (A03). 3. Olhar rotas e logs de erro.
+      dashboard: '{{ if or (eq $labels.service_name "auth") (eq $labels.service_name "core") (eq $labels.service_name "messager") (eq $labels.service_name
+        "api-notify") }}/d/solier-servico-java{{ else }}/d/solier-servico-python{{ end }}?var-service={{ $labels.service_name }}&var-environment={{
+        $labels.deployment_environment }}'
+    labels:
+      alert_id: A04
+      priority: P2
+      category: erros
+      team: solier
+      escalation_group: erro-5xx
+  - uid: solier-a06
+    title: A06 Latência crítica (central)
+    condition: C
+    for: 10m
+    noDataState: OK
+    execErrState: OK
+    isPaused: false
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: (((histogram_quantile(0.95, sum by (service_name,deployment_environment,le) (rate(http_server_requests_milliseconds_bucket{deployment_environment="prod",uri!~"/actuator.*|UNKNOWN",service_name=~"auth|core|messager",status=~"2..|3.."}[5m]))))
+          >= 2000) and on(service_name,deployment_environment) ((sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager"}[5m])))
+          > 0.05)) or (((histogram_quantile(0.95, sum by (service_name,deployment_environment,le) (rate(http_server_duration_milliseconds_bucket{deployment_environment="prod",http_target!~"/health|",service_name=~"api-recommendation|ai-assistant",http_status_code=~"2..|3.."}[5m]))))
+          >= 2000) and on(service_name,deployment_environment) ((sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"api-recommendation|ai-assistant"}[5m])))
+          > 0.05))
+        datasource:
+          type: prometheus
+          uid: prometheus
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+        datasource:
+          type: __expr__
+          uid: __expr__
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        datasource:
+          type: __expr__
+          uid: __expr__
+    annotations:
+      summary: '{{ $labels.service_name }} ({{ $labels.deployment_environment }}): p95 de {{ printf "%.1f" $values.B.Value }} ms'
+      description: Latência p95 (respostas 2xx e 3xx) de 2000 ms ou mais por 10 minutos.
+      impact: 'Serviço central lento: o usuário percebe a demora.'
+      first_steps: 1. Ver a latência por rota. 2. Ver as dependências (banco, chamadas externas). 3. Ver heap e GC.
+      dashboard: '{{ if or (eq $labels.service_name "auth") (eq $labels.service_name "core") (eq $labels.service_name "messager") (eq $labels.service_name
+        "api-notify") }}/d/solier-servico-java{{ else }}/d/solier-servico-python{{ end }}?var-service={{ $labels.service_name }}&var-environment={{
+        $labels.deployment_environment }}'
+    labels:
+      alert_id: A06
+      priority: P2
+      category: latencia
+      team: solier
+      escalation_group: latencia
+  - uid: solier-a10
+    title: A10 Usuário não provisionado
+    condition: C
+    for: 0s
+    noDataState: OK
+    execErrState: OK
+    isPaused: false
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: loki
+      model:
+        refId: A
+        expr: sum by (service_name, deployment_environment) (count_over_time({deployment_environment="prod", service_name="auth"} |= "CORE_PROVISIONING_DLQ"
+          [5m])) > 0
+        datasource:
+          type: loki
+          uid: loki
+        queryType: instant
+        maxLines: 100
+    - refId: B
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+        datasource:
+          type: __expr__
+          uid: __expr__
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        datasource:
+          type: __expr__
+          uid: __expr__
+    annotations:
+      summary: '{{ $labels.service_name }} ({{ $labels.deployment_environment }}): usuário não provisionado no core'
+      description: O auth esgotou as tentativas de criar o usuário no api-core e gravou CORE_PROVISIONING_DLQ (janela de 5 minutos).
+      impact: 'Um usuário foi criado no auth e não no core: o cadastro fica incompleto.'
+      first_steps: 1. Pegar o authId no log. 2. Ver se o api-core estava fora. 3. Reprocessar o usuário na fila de falhas.
+      dashboard: /d/solier-servico-java?var-service={{ $labels.service_name }}&var-environment={{ $labels.deployment_environment }}
+    labels:
+      alert_id: A10
+      priority: P2
+      category: negocio
+      team: solier
+  - uid: solier-a12
+    title: A12 Pool de conexões saturado
+    condition: C
+    for: 5m
+    noDataState: OK
+    execErrState: OK
+    isPaused: false
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: max by (service_name,deployment_environment) (hikaricp_connections_pending{deployment_environment="prod",service_name=~"auth|core"})
+          > 0
+        datasource:
+          type: prometheus
+          uid: prometheus
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+        datasource:
+          type: __expr__
+          uid: __expr__
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        datasource:
+          type: __expr__
+          uid: __expr__
+    annotations:
+      summary: '{{ $labels.service_name }} ({{ $labels.deployment_environment }}): requisições esperando conexão do banco'
+      description: Há conexões esperando no pool Hikari há mais de 5 minutos.
+      impact: 'Requisições esperando conexão com o banco: o serviço está perto de travar.'
+      first_steps: 1. Ver conexões em uso e pendentes. 2. Procurar consulta lenta. 3. Avaliar aumentar o pool.
+      dashboard: /d/solier-servico-java?var-service={{ $labels.service_name }}&var-environment={{ $labels.deployment_environment }}
+    labels:
+      alert_id: A12
+      priority: P2
+      category: saturacao
+      team: solier
+  - uid: solier-a13
+    title: A13 Heap da JVM no limite (central)
+    condition: C
+    for: 10m
+    noDataState: OK
+    execErrState: OK
+    isPaused: false
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: max by (service_name,deployment_environment) (100 * sum by (service_name,deployment_environment,instance) (jvm_memory_used_bytes{deployment_environment="prod",service_name=~"auth|core|messager",area="heap"})
+          / sum by (service_name,deployment_environment,instance) (jvm_memory_max_bytes{deployment_environment="prod",service_name=~"auth|core|messager",area="heap"}
+          > 0)) >= 90
+        datasource:
+          type: prometheus
+          uid: prometheus
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+        datasource:
+          type: __expr__
+          uid: __expr__
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        datasource:
+          type: __expr__
+          uid: __expr__
+    annotations:
+      summary: '{{ $labels.service_name }} ({{ $labels.deployment_environment }}): heap em {{ printf "%.1f" $values.B.Value }} %'
+      description: O pod com mais memória usa 90 % ou mais do heap máximo por 10 minutos.
+      impact: Risco de falta de memória e reinício do pod.
+      first_steps: 1. Ver o heap por pod. 2. Ver as pausas de GC. 3. Avaliar aumentar a memória.
+      dashboard: /d/solier-servico-java?var-service={{ $labels.service_name }}&var-environment={{ $labels.deployment_environment }}
+    labels:
+      alert_id: A13
+      priority: P2
+      category: saturacao
+      team: solier
+- orgId: 1
+  name: SOLIER — P3 (horário comercial)
+  folder: SOLIER
+  interval: 1m
+  rules:
+  - uid: solier-a05
+    title: A05 Erros 5xx em atenção
+    condition: C
+    for: 10m
+    noDataState: OK
+    execErrState: OK
+    isPaused: false
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: (((((100 * (sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",status=~"5..",service_name=~"auth|core|messager|api-notify"}[5m]))
+          or 0 * sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m])))
+          / (sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m]))
+          > 0))) >= 1) and (((100 * (sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",status=~"5..",service_name=~"auth|core|messager|api-notify"}[5m]))
+          or 0 * sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m])))
+          / (sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m]))
+          > 0))) < 5)) and on(service_name,deployment_environment) ((sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager|api-notify"}[5m])))
+          > 0.05)) or (((((100 * (sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",http_status_code=~"5..",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m]))
+          or 0 * sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m])))
+          / (sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m]))
+          > 0))) >= 1) and (((100 * (sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",http_status_code=~"5..",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m]))
+          or 0 * sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m])))
+          / (sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m]))
+          > 0))) < 5)) and on(service_name,deployment_environment) ((sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m])))
+          > 0.05))
+        datasource:
+          type: prometheus
+          uid: prometheus
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+        datasource:
+          type: __expr__
+          uid: __expr__
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        datasource:
+          type: __expr__
+          uid: __expr__
+    annotations:
+      summary: '{{ $labels.service_name }} ({{ $labels.deployment_environment }}): {{ printf "%.1f" $values.B.Value }} % de respostas 5xx'
+      description: Taxa de erros 5xx entre 1 % e 5 % por 10 minutos.
+      impact: Erros acima do normal, sem quebrar o serviço.
+      first_steps: Ver as rotas e as exceções mais frequentes no painel Análise de erros.
+      dashboard: '{{ if or (eq $labels.service_name "auth") (eq $labels.service_name "core") (eq $labels.service_name "messager") (eq $labels.service_name
+        "api-notify") }}/d/solier-servico-java{{ else }}/d/solier-servico-python{{ end }}?var-service={{ $labels.service_name }}&var-environment={{
+        $labels.deployment_environment }}'
+    labels:
+      alert_id: A05
+      priority: P3
+      category: erros
+      team: solier
+      escalation_group: erro-5xx
+  - uid: solier-a07
+    title: A07 Latência crítica (apoio)
+    condition: C
+    for: 10m
+    noDataState: OK
+    execErrState: OK
+    isPaused: false
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: (((histogram_quantile(0.95, sum by (service_name,deployment_environment,le) (rate(http_server_requests_milliseconds_bucket{deployment_environment="prod",uri!~"/actuator.*|UNKNOWN",service_name=~"api-notify",status=~"2..|3.."}[5m]))))
+          >= 2000) and on(service_name,deployment_environment) ((sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"api-notify"}[5m])))
+          > 0.05)) or (((histogram_quantile(0.95, sum by (service_name,deployment_environment,le) (rate(http_server_duration_milliseconds_bucket{deployment_environment="prod",http_target!~"/health|",service_name=~"ai-validation",http_status_code=~"2..|3.."}[5m]))))
+          >= 2000) and on(service_name,deployment_environment) ((sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"ai-validation"}[5m])))
+          > 0.05))
+        datasource:
+          type: prometheus
+          uid: prometheus
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+        datasource:
+          type: __expr__
+          uid: __expr__
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        datasource:
+          type: __expr__
+          uid: __expr__
+    annotations:
+      summary: '{{ $labels.service_name }} ({{ $labels.deployment_environment }}): p95 de {{ printf "%.1f" $values.B.Value }} ms'
+      description: Latência p95 (respostas 2xx e 3xx) de 2000 ms ou mais por 10 minutos.
+      impact: Serviço de apoio lento; o efeito nos outros serviços é indireto.
+      first_steps: Mesmos passos do A06.
+      dashboard: '{{ if or (eq $labels.service_name "auth") (eq $labels.service_name "core") (eq $labels.service_name "messager") (eq $labels.service_name
+        "api-notify") }}/d/solier-servico-java{{ else }}/d/solier-servico-python{{ end }}?var-service={{ $labels.service_name }}&var-environment={{
+        $labels.deployment_environment }}'
+    labels:
+      alert_id: A07
+      priority: P3
+      category: latencia
+      team: solier
+      escalation_group: latencia
+  - uid: solier-a08
+    title: A08 Latência crítica (serviços lentos)
+    condition: C
+    for: 10m
+    noDataState: OK
+    execErrState: OK
+    isPaused: false
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: (((histogram_quantile(0.95, sum by (service_name,deployment_environment,le) (rate(http_server_duration_milliseconds_bucket{deployment_environment="prod",http_target!~"/health|",service_name=~"ai-accessibility",http_status_code=~"2..|3.."}[5m]))))
+          >= 8000) and on(service_name,deployment_environment) ((sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"ai-accessibility"}[5m])))
+          > 0.05)) or (((histogram_quantile(0.95, sum by (service_name,deployment_environment,le) (rate(http_server_duration_milliseconds_bucket{deployment_environment="prod",http_target!~"/health|",service_name=~"google-registry",http_status_code=~"2..|3.."}[5m]))))
+          >= 5000) and on(service_name,deployment_environment) ((sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"google-registry"}[5m])))
+          > 0.05))
+        datasource:
+          type: prometheus
+          uid: prometheus
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+        datasource:
+          type: __expr__
+          uid: __expr__
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        datasource:
+          type: __expr__
+          uid: __expr__
+    annotations:
+      summary: '{{ $labels.service_name }} ({{ $labels.deployment_environment }}): p95 de {{ printf "%.1f" $values.B.Value }} ms'
+      description: 'Latência p95 acima do limite próprio do serviço: ai-accessibility 8000 ms, google-registry 5000 ms.'
+      impact: O serviço, que já é lento por natureza (LLM ou API do Google), ficou ainda mais lento.
+      first_steps: Ver as chamadas de saída e as capacidades do Google; checar cota ou indisponibilidade do provedor.
+      dashboard: /d/solier-servico-python?var-service={{ $labels.service_name }}&var-environment={{ $labels.deployment_environment }}
+    labels:
+      alert_id: A08
+      priority: P3
+      category: latencia
+      team: solier
+      escalation_group: latencia
+  - uid: solier-a11
+    title: A11 Provedor de IA indisponível
+    condition: C
+    for: 0s
+    noDataState: OK
+    execErrState: OK
+    isPaused: false
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: loki
+      model:
+        refId: A
+        expr: sum by (service_name, deployment_environment) (count_over_time({deployment_environment="prod", service_name="ai-accessibility"}
+          |= "PROVIDER_UNAVAILABLE" [10m])) >= 5
+        datasource:
+          type: loki
+          uid: loki
+        queryType: instant
+        maxLines: 100
+    - refId: B
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+        datasource:
+          type: __expr__
+          uid: __expr__
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        datasource:
+          type: __expr__
+          uid: __expr__
+    annotations:
+      summary: '{{ $labels.service_name }} ({{ $labels.deployment_environment }}): provedor de IA indisponível'
+      description: Cinco ou mais análises terminaram com PROVIDER_UNAVAILABLE em 10 minutos.
+      impact: As análises de imagem saem sem resultado (HTTP 200, mas sem decisão).
+      first_steps: Checar a chave e a cota do provedor de IA e o status dele.
+      dashboard: /d/solier-servico-python?var-service={{ $labels.service_name }}&var-environment={{ $labels.deployment_environment }}
+    labels:
+      alert_id: A11
+      priority: P3
+      category: negocio
+      team: solier
+  - uid: solier-a14
+    title: A14 Heap da JVM no limite (apoio)
+    condition: C
+    for: 10m
+    noDataState: OK
+    execErrState: OK
+    isPaused: false
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: max by (service_name,deployment_environment) (100 * sum by (service_name,deployment_environment,instance) (jvm_memory_used_bytes{deployment_environment="prod",service_name=~"api-notify",area="heap"})
+          / sum by (service_name,deployment_environment,instance) (jvm_memory_max_bytes{deployment_environment="prod",service_name=~"api-notify",area="heap"}
+          > 0)) >= 90
+        datasource:
+          type: prometheus
+          uid: prometheus
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+        datasource:
+          type: __expr__
+          uid: __expr__
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        datasource:
+          type: __expr__
+          uid: __expr__
+    annotations:
+      summary: '{{ $labels.service_name }} ({{ $labels.deployment_environment }}): heap em {{ printf "%.1f" $values.B.Value }} %'
+      description: O pod com mais memória usa 90 % ou mais do heap máximo por 10 minutos.
+      impact: Mesmo risco, em serviço de apoio.
+      first_steps: Mesmos passos do A13.
+      dashboard: /d/solier-servico-java?var-service={{ $labels.service_name }}&var-environment={{ $labels.deployment_environment }}
+    labels:
+      alert_id: A14
+      priority: P3
+      category: saturacao
+      team: solier
+- orgId: 1
+  name: SOLIER — P4 (até 3 dias)
+  folder: SOLIER
+  interval: 1m
+  rules:
+  - uid: solier-a09
+    title: A09 Latência em atenção
+    condition: C
+    for: 15m
+    noDataState: OK
+    execErrState: OK
+    isPaused: false
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: ((((histogram_quantile(0.95, sum by (service_name,deployment_environment,le) (rate(http_server_requests_milliseconds_bucket{deployment_environment="prod",uri!~"/actuator.*|UNKNOWN",service_name=~"auth|core|messager",status=~"2..|3.."}[5m]))))
+          >= 500) and ((histogram_quantile(0.95, sum by (service_name,deployment_environment,le) (rate(http_server_requests_milliseconds_bucket{deployment_environment="prod",uri!~"/actuator.*|UNKNOWN",service_name=~"auth|core|messager",status=~"2..|3.."}[5m]))))
+          < 2000)) and on(service_name,deployment_environment) ((sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",service_name=~"auth|core|messager"}[5m])))
+          > 0.05)) or ((((histogram_quantile(0.95, sum by (service_name,deployment_environment,le) (rate(http_server_duration_milliseconds_bucket{deployment_environment="prod",http_target!~"/health|",service_name=~"api-recommendation|ai-assistant",http_status_code=~"2..|3.."}[5m]))))
+          >= 500) and ((histogram_quantile(0.95, sum by (service_name,deployment_environment,le) (rate(http_server_duration_milliseconds_bucket{deployment_environment="prod",http_target!~"/health|",service_name=~"api-recommendation|ai-assistant",http_status_code=~"2..|3.."}[5m]))))
+          < 2000)) and on(service_name,deployment_environment) ((sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",service_name=~"api-recommendation|ai-assistant"}[5m])))
+          > 0.05))
+        datasource:
+          type: prometheus
+          uid: prometheus
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+        datasource:
+          type: __expr__
+          uid: __expr__
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        datasource:
+          type: __expr__
+          uid: __expr__
+    annotations:
+      summary: '{{ $labels.service_name }} ({{ $labels.deployment_environment }}): p95 de {{ printf "%.1f" $values.B.Value }} ms'
+      description: Latência p95 (respostas 2xx e 3xx) entre 500 ms e 2000 ms por 15 minutos.
+      impact: Lentidão leve em serviço central.
+      first_steps: Observar a tendência; investigar se continuar.
+      dashboard: '{{ if or (eq $labels.service_name "auth") (eq $labels.service_name "core") (eq $labels.service_name "messager") (eq $labels.service_name
+        "api-notify") }}/d/solier-servico-java{{ else }}/d/solier-servico-python{{ end }}?var-service={{ $labels.service_name }}&var-environment={{
+        $labels.deployment_environment }}'
+    labels:
+      alert_id: A09
+      priority: P4
+      category: latencia
+      team: solier
+      escalation_group: latencia
+- orgId: 1
+  name: SOLIER — P5 (na semana)
+  folder: SOLIER
+  interval: 1m
+  rules:
+  - uid: solier-a15
+    title: A15 Acessos negados em massa
+    condition: C
+    for: 15m
+    noDataState: OK
+    execErrState: OK
+    isPaused: false
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: (sum by (service_name,deployment_environment) (rate(http_server_requests_milliseconds_count{deployment_environment="prod",uri!~"/actuator.*",status=~"401",service_name=~"auth|core|messager|api-notify"}[5m])))
+          >= 2 or (sum by (service_name,deployment_environment) (rate(http_server_duration_milliseconds_count{deployment_environment="prod",http_target!~"/health",http_status_code=~"401",service_name=~"google-registry|api-recommendation|ai-accessibility|ai-validation|ai-assistant"}[5m])))
+          >= 2
+        datasource:
+          type: prometheus
+          uid: prometheus
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+        datasource:
+          type: __expr__
+          uid: __expr__
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+        datasource:
+          type: __expr__
+          uid: __expr__
+    annotations:
+      summary: '{{ $labels.service_name }} ({{ $labels.deployment_environment }}): {{ printf "%.1f" $values.B.Value }} respostas 401 por segundo'
+      description: Respostas 401 de 2 por segundo ou mais por 15 minutos.
+      impact: Pode ser token expirado em massa, varredura de rotas inexistentes ou tentativa de acesso indevido.
+      first_steps: Ver de quais rotas vêm os 401 e se há um cliente repetido.
+      dashboard: '{{ if or (eq $labels.service_name "auth") (eq $labels.service_name "core") (eq $labels.service_name "messager") (eq $labels.service_name
+        "api-notify") }}/d/solier-servico-java{{ else }}/d/solier-servico-python{{ end }}?var-service={{ $labels.service_name }}&var-environment={{
+        $labels.deployment_environment }}'
+    labels:
+      alert_id: A15
+      priority: P5
+      category: seguranca
+      team: solier

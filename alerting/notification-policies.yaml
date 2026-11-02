@@ -1,0 +1,39 @@
+apiVersion: 1
+policies:
+- orgId: 1
+  receiver: api-email-jira
+  group_by:
+  - alertname
+  - service_name
+  - deployment_environment
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 35m
+  routes:
+  - receiver: api-email-email
+    object_matchers:
+    - - priority
+      - '='
+      - P1
+    continue: true
+    repeat_interval: 1h
+  - receiver: api-email-email
+    object_matchers:
+    - - priority
+      - '='
+      - P2
+    continue: true
+    repeat_interval: 4h
+  - receiver: api-email-whatsapp
+    object_matchers:
+    - - priority
+      - '='
+      - P1
+    continue: true
+    repeat_interval: 1h
+  - receiver: api-email-jira
+    object_matchers:
+    - - priority
+      - =~
+      - .+
+    repeat_interval: 35m

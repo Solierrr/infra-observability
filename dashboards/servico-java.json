@@ -1,0 +1,1819 @@
+{
+  "uid": "solier-servico-java",
+  "title": "SOLIER — Serviço Java",
+  "description": "Um serviço Java por vez: está saudável, o que mudou e onde investigar.",
+  "id": null,
+  "tags": [
+    "solier"
+  ],
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "graphTooltip": 1,
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "fiscalYearStartMonth": 0,
+  "liveNow": false,
+  "annotations": {
+    "list": []
+  },
+  "links": [
+    {
+      "type": "link",
+      "title": "Saúde geral",
+      "url": "/d/solier-saude-geral?${environment:queryparam}",
+      "icon": "dashboard",
+      "keepTime": true,
+      "includeVars": false,
+      "targetBlank": false,
+      "tooltip": "",
+      "tags": []
+    },
+    {
+      "type": "link",
+      "title": "Serviço Python",
+      "url": "/d/solier-servico-python?${environment:queryparam}",
+      "icon": "dashboard",
+      "keepTime": true,
+      "includeVars": false,
+      "targetBlank": false,
+      "tooltip": "",
+      "tags": []
+    },
+    {
+      "type": "link",
+      "title": "Análise de erros",
+      "url": "/d/solier-analise-erros?${environment:queryparam}",
+      "icon": "dashboard",
+      "keepTime": true,
+      "includeVars": false,
+      "targetBlank": false,
+      "tooltip": "",
+      "tags": []
+    }
+  ],
+  "panels": [
+    {
+      "type": "row",
+      "title": "Agora",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "panels": [],
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "Requisições por segundo",
+      "description": "Requisições por segundo do serviço, sem health checks.",
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*|UNKNOWN\",service_name=\"$service\"}[$__rate_interval]))",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "Sem dados",
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      },
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "Taxa de erros 5xx",
+      "description": "Percentual de respostas 5xx. Amarelo a partir de 1 %, vermelho a partir de 5 %.",
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "(100 * (sum (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",status=~\"5..\"}[$__rate_interval])) or 0 * sum (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\"}[$__rate_interval]))) / (sum (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\"}[$__rate_interval])) > 0))",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "noValue": "Sem dados",
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      },
+      "id": 3
+    },
+    {
+      "type": "stat",
+      "title": "Latência p95",
+      "description": "Latência p95 das respostas 2xx e 3xx: 95 % das requisições são mais rápidas que isto. Amarelo a partir de 500 ms, vermelho a partir de 2000 ms.",
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_milliseconds_bucket{deployment_environment=\"$environment\",uri!~\"/actuator.*|UNKNOWN\",service_name=\"$service\",status=~\"2..|3..\"}[$__rate_interval])))",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 500
+              },
+              {
+                "color": "red",
+                "value": 2000
+              }
+            ]
+          },
+          "noValue": "Sem dados",
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      },
+      "id": 4
+    },
+    {
+      "type": "stat",
+      "title": "Latência p99",
+      "description": "Latência p99 das respostas 2xx e 3xx: 1 em 100 requisições é mais lenta que isto.",
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_requests_milliseconds_bucket{deployment_environment=\"$environment\",uri!~\"/actuator.*|UNKNOWN\",service_name=\"$service\",status=~\"2..|3..\"}[$__rate_interval])))",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 500
+              },
+              {
+                "color": "red",
+                "value": 2000
+              }
+            ]
+          },
+          "noValue": "Sem dados",
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      },
+      "id": 5
+    },
+    {
+      "type": "row",
+      "title": "Saúde e comportamento",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "panels": [],
+      "id": 6
+    },
+    {
+      "type": "grafana-polystat-panel",
+      "title": "Saúde por pod",
+      "description": "Um hexágono por pod do serviço (instância que envia telemetria). Verde: saudável. Amarelo: erro 5xx ≥ 1 % ou p95 ≥ 500 ms. Vermelho: erro ≥ 5 % ou p95 ≥ 2000 ms. Mostra a saúde da aplicação no pod, não do pod em si. Sem identificação de pod, aparece o serviço inteiro.",
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 10,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "label_replace(max by (instance) (label_replace(((((100 * (sum by (instance) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",status=~\"5..\",instance=~\".+\"}[$__rate_interval])) or 0 * sum by (instance) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",instance=~\".+\"}[$__rate_interval]))) / (sum by (instance) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",instance=~\".+\"}[$__rate_interval])) > 0))) >= bool 1) + (((100 * (sum by (instance) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",status=~\"5..\",instance=~\".+\"}[$__rate_interval])) or 0 * sum by (instance) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",instance=~\".+\"}[$__rate_interval]))) / (sum by (instance) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",instance=~\".+\"}[$__rate_interval])) > 0))) >= bool 5)), \"k\", \"e\", \"\", \"\") or label_replace(((((histogram_quantile(0.95, sum by (instance,le) (rate(http_server_requests_milliseconds_bucket{deployment_environment=\"$environment\",uri!~\"/actuator.*|UNKNOWN\",service_name=\"$service\",instance=~\".+\",status=~\"2..|3..\"}[$__rate_interval])))) >= bool 500) + ((histogram_quantile(0.95, sum by (instance,le) (rate(http_server_requests_milliseconds_bucket{deployment_environment=\"$environment\",uri!~\"/actuator.*|UNKNOWN\",service_name=\"$service\",instance=~\".+\",status=~\"2..|3..\"}[$__rate_interval])))) >= bool 2000)) and (sum by (instance) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",instance=~\".+\"}[$__rate_interval])) > 0)), \"k\", \"l\", \"\", \"\")), \"instance\", \"$1\", \"instance\", \".*-([^-]+-[^-]+)$\") or on() (max by (service_name) (label_replace(((((100 * (sum by (service_name) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",status=~\"5..\"}[$__rate_interval])) or 0 * sum by (service_name) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\"}[$__rate_interval]))) / (sum by (service_name) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\"}[$__rate_interval])) > 0))) >= bool 1) + (((100 * (sum by (service_name) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",status=~\"5..\"}[$__rate_interval])) or 0 * sum by (service_name) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\"}[$__rate_interval]))) / (sum by (service_name) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\"}[$__rate_interval])) > 0))) >= bool 5)), \"k\", \"e\", \"\", \"\") or label_replace(((((histogram_quantile(0.95, sum by (service_name,le) (rate(http_server_requests_milliseconds_bucket{deployment_environment=\"$environment\",uri!~\"/actuator.*|UNKNOWN\",service_name=\"$service\",status=~\"2..|3..\"}[$__rate_interval])))) >= bool 500) + ((histogram_quantile(0.95, sum by (service_name,le) (rate(http_server_requests_milliseconds_bucket{deployment_environment=\"$environment\",uri!~\"/actuator.*|UNKNOWN\",service_name=\"$service\",status=~\"2..|3..\"}[$__rate_interval])))) >= bool 2000)) and (sum by (service_name) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\"}[$__rate_interval])) > 0)), \"k\", \"l\", \"\", \"\")) unless on() max by (instance) (label_replace(((((100 * (sum by (instance) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",status=~\"5..\",instance=~\".+\"}[$__rate_interval])) or 0 * sum by (instance) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",instance=~\".+\"}[$__rate_interval]))) / (sum by (instance) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",instance=~\".+\"}[$__rate_interval])) > 0))) >= bool 1) + (((100 * (sum by (instance) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",status=~\"5..\",instance=~\".+\"}[$__rate_interval])) or 0 * sum by (instance) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",instance=~\".+\"}[$__rate_interval]))) / (sum by (instance) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",instance=~\".+\"}[$__rate_interval])) > 0))) >= bool 5)), \"k\", \"e\", \"\", \"\") or label_replace(((((histogram_quantile(0.95, sum by (instance,le) (rate(http_server_requests_milliseconds_bucket{deployment_environment=\"$environment\",uri!~\"/actuator.*|UNKNOWN\",service_name=\"$service\",instance=~\".+\",status=~\"2..|3..\"}[$__rate_interval])))) >= bool 500) + ((histogram_quantile(0.95, sum by (instance,le) (rate(http_server_requests_milliseconds_bucket{deployment_environment=\"$environment\",uri!~\"/actuator.*|UNKNOWN\",service_name=\"$service\",instance=~\".+\",status=~\"2..|3..\"}[$__rate_interval])))) >= bool 2000)) and (sum by (instance) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",instance=~\".+\"}[$__rate_interval])) > 0)), \"k\", \"l\", \"\", \"\")))",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "format": "time_series",
+          "legendFormat": "{{instance}}{{service_name}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Sem dados",
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "options": {
+        "globalThresholdsConfig": [
+          {
+            "value": -1,
+            "state": 3,
+            "color": "#8e8e93"
+          },
+          {
+            "value": 0,
+            "state": 0,
+            "color": "#3d9e5a"
+          },
+          {
+            "value": 1,
+            "state": 1,
+            "color": "#e0a800"
+          },
+          {
+            "value": 2,
+            "state": 2,
+            "color": "#d9534f"
+          }
+        ],
+        "globalOperator": "last",
+        "globalTextFontFamily": "Inter",
+        "globalTooltipsFontFamily": "Inter",
+        "globalLabelFontSize": 12,
+        "globalDisplayMode": "all",
+        "globalShowValueEnabled": false,
+        "globalTooltipsShowValueEnabled": false,
+        "globalTooltipsShowTimestampEnabled": false,
+        "globalShape": "hexagon_pointed",
+        "globalAutoScaleFonts": true,
+        "globalPolygonBorderSize": 2,
+        "globalPolygonBorderColor": "rgba(0,0,0,0.25)",
+        "globalGradientsEnabled": false,
+        "autoSizeColumns": true,
+        "autoSizeRows": true,
+        "autoSizePolygons": true,
+        "globalDecimals": 0,
+        "globalUnitFormat": "none",
+        "layoutDisplayLimit": 100,
+        "globalTooltipsEnabled": true,
+        "tooltipDisplayMode": "all",
+        "globalTextFontAutoColorEnabled": true,
+        "overrideConfig": {
+          "overrides": []
+        }
+      },
+      "id": 7
+    },
+    {
+      "type": "timeseries",
+      "title": "Requisições por classe de status",
+      "description": "Requisições por segundo por classe de status. 2xx deu certo, 4xx erro do cliente, 5xx erro do serviço.",
+      "gridPos": {
+        "x": 10,
+        "y": 6,
+        "w": 7,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",status=~\"2..\"}[$__rate_interval]))",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "format": "time_series",
+          "legendFormat": "2xx"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "(sum (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",status=~\"4..\"}[$__rate_interval])) or 0 * sum (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\"}[$__rate_interval])))",
+          "refId": "B",
+          "range": true,
+          "instant": false,
+          "format": "time_series",
+          "legendFormat": "4xx"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "(sum (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",status=~\"5..\"}[$__rate_interval])) or 0 * sum (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\"}[$__rate_interval])))",
+          "refId": "C",
+          "range": true,
+          "instant": false,
+          "format": "time_series",
+          "legendFormat": "5xx"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0,
+          "noValue": "Sem dados",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false,
+            "lineInterpolation": "smooth",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "2xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#3d9e5a"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "3xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#6e9fd8"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "4xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#e0a800"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "5xx"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#d9534f"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 8
+    },
+    {
+      "type": "timeseries",
+      "title": "Latência p50, p95 e p99",
+      "description": "Latência (2xx e 3xx) em p50 (típica), p95 e p99. As linhas marcam 500 ms e 2000 ms.",
+      "gridPos": {
+        "x": 17,
+        "y": 6,
+        "w": 7,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(http_server_requests_milliseconds_bucket{deployment_environment=\"$environment\",uri!~\"/actuator.*|UNKNOWN\",service_name=\"$service\",status=~\"2..|3..\"}[$__rate_interval])))",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "format": "time_series",
+          "legendFormat": "p50"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_milliseconds_bucket{deployment_environment=\"$environment\",uri!~\"/actuator.*|UNKNOWN\",service_name=\"$service\",status=~\"2..|3..\"}[$__rate_interval])))",
+          "refId": "B",
+          "range": true,
+          "instant": false,
+          "format": "time_series",
+          "legendFormat": "p95"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_requests_milliseconds_bucket{deployment_environment=\"$environment\",uri!~\"/actuator.*|UNKNOWN\",service_name=\"$service\",status=~\"2..|3..\"}[$__rate_interval])))",
+          "refId": "C",
+          "range": true,
+          "instant": false,
+          "format": "time_series",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "min": 0,
+          "noValue": "Sem dados",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false,
+            "lineInterpolation": "smooth",
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 500
+              },
+              {
+                "color": "red",
+                "value": 2000
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p50"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#A0CBE8"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p95"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#4E79A7"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p99"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#B07AA1"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 9
+    },
+    {
+      "type": "row",
+      "title": "Rotas",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "panels": [],
+      "id": 10
+    },
+    {
+      "type": "table",
+      "title": "Erros e latência por rota",
+      "description": "Por rota e método no intervalo selecionado. Ordenada por taxa de erro 5xx; as colunas coloridas seguem os mesmos limites dos números do topo.",
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 24,
+        "h": 9
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "round(sum by (uri,method) (increase(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\"}[$__range])))",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "((100 * (sum by (uri,method) (increase(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",status=~\"5..\"}[$__range])) or 0 * sum by (uri,method) (increase(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\"}[$__range]))) / (sum by (uri,method) (increase(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\"}[$__range])) > 0)))",
+          "refId": "B",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "histogram_quantile(0.95, sum by (uri,method,le) (increase(http_server_requests_milliseconds_bucket{deployment_environment=\"$environment\",uri!~\"/actuator.*|UNKNOWN\",service_name=\"$service\",status=~\"2..|3..\"}[$__range])))",
+          "refId": "C",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Sem dados",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Erro 5xx (%)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 5
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p95 (ms)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 500
+                    },
+                    {
+                      "color": "red",
+                      "value": 2000
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "sortBy": [
+          {
+            "displayName": "Erro 5xx (%)",
+            "desc": true
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "uri": 0,
+              "method": 1,
+              "Value #A": 2,
+              "Value #B": 3,
+              "Value #C": 4
+            },
+            "renameByName": {
+              "uri": "Rota",
+              "method": "Método",
+              "Value #A": "Requisições",
+              "Value #B": "Erro 5xx (%)",
+              "Value #C": "p95 (ms)"
+            }
+          }
+        }
+      ],
+      "id": 11
+    },
+    {
+      "type": "row",
+      "title": "Investigação: logs e traces",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "panels": [],
+      "id": 12
+    },
+    {
+      "type": "logs",
+      "title": "Logs de erro",
+      "description": "Logs com severidade ERROR ou FATAL do serviço. Cada linha traz o trace_id da requisição.",
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 12,
+        "h": 10
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "{service_name=\"$service\", deployment_environment=\"$environment\"} | severity_text=~\"(?i)error|fatal|critical\"",
+          "refId": "A",
+          "queryType": "range",
+          "maxLines": 200
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none",
+        "prettifyLogMessage": false,
+        "showLabels": false,
+        "showCommonLabels": false
+      },
+      "id": 13
+    },
+    {
+      "type": "table",
+      "title": "Traces com erro ou lentos",
+      "description": "Traces do serviço com erro ou mais lentos que 2 s. Clique para abrir o trace completo.",
+      "gridPos": {
+        "x": 12,
+        "y": 25,
+        "w": 12,
+        "h": 10
+      },
+      "datasource": {
+        "type": "tempo",
+        "uid": "${DS_TEMPO}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "${DS_TEMPO}"
+          },
+          "query": "{ resource.service.name = \"$service\" && resource.deployment.environment = \"$environment\" && (status = error || duration > 2s) }",
+          "queryType": "traceql",
+          "refId": "A",
+          "limit": 20,
+          "tableType": "traces"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Sem dados"
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "id": 14
+    },
+    {
+      "type": "row",
+      "title": "Dependências (banco, cache, chamadas externas)",
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "panels": [
+        {
+          "type": "timeseries",
+          "title": "Conexões em uso do pool (Hikari)",
+          "description": "Conexões em uso e capacidade do pool Hikari (serviços com PostgreSQL: auth e core).",
+          "gridPos": {
+            "x": 0,
+            "y": 37,
+            "w": 8,
+            "h": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "expr": "sum by (instance) (hikaricp_connections_active{service_name=\"$service\",deployment_environment=\"$environment\"})",
+              "refId": "A",
+              "range": true,
+              "instant": false,
+              "format": "time_series",
+              "legendFormat": "em uso {{instance}}"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "expr": "max(hikaricp_connections_max{service_name=\"$service\",deployment_environment=\"$environment\"})",
+              "refId": "B",
+              "range": true,
+              "instant": false,
+              "format": "time_series",
+              "legendFormat": "máximo"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "noValue": "Sem dados para este serviço",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 2,
+                "fillOpacity": 12,
+                "showPoints": "never",
+                "spanNulls": false,
+                "lineInterpolation": "smooth",
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "id": 16
+        },
+        {
+          "type": "timeseries",
+          "title": "Conexões aguardando no pool (Hikari)",
+          "description": "Threads aguardando uma conexão do pool. Deve ficar em zero.",
+          "gridPos": {
+            "x": 8,
+            "y": 37,
+            "w": 8,
+            "h": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "expr": "sum by (instance) (hikaricp_connections_pending{service_name=\"$service\",deployment_environment=\"$environment\"})",
+              "refId": "A",
+              "range": true,
+              "instant": false,
+              "format": "time_series",
+              "legendFormat": "{{instance}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "noValue": "Sem dados para este serviço",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 2,
+                "fillOpacity": 12,
+                "showPoints": "never",
+                "spanNulls": false,
+                "lineInterpolation": "smooth",
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "id": 17
+        },
+        {
+          "type": "timeseries",
+          "title": "Latência p95 do MongoDB",
+          "description": "Latência p95 dos comandos MongoDB (messager e api-notify).",
+          "gridPos": {
+            "x": 16,
+            "y": 37,
+            "w": 8,
+            "h": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(mongodb_driver_commands_milliseconds_bucket{service_name=\"$service\",deployment_environment=\"$environment\"}[$__rate_interval])))",
+              "refId": "A",
+              "range": true,
+              "instant": false,
+              "format": "time_series",
+              "legendFormat": "p95"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "min": 0,
+              "noValue": "Sem dados para este serviço",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 2,
+                "fillOpacity": 12,
+                "showPoints": "never",
+                "spanNulls": false,
+                "lineInterpolation": "smooth",
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "id": 18
+        },
+        {
+          "type": "timeseries",
+          "title": "Latência p95 das chamadas de saída",
+          "description": "Latência p95 das chamadas HTTP de saída, por destino.",
+          "gridPos": {
+            "x": 0,
+            "y": 45,
+            "w": 12,
+            "h": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "expr": "histogram_quantile(0.95, sum by (client_name,le) (rate(http_client_requests_milliseconds_bucket{service_name=\"$service\",deployment_environment=\"$environment\"}[$__rate_interval])))",
+              "refId": "A",
+              "range": true,
+              "instant": false,
+              "format": "time_series",
+              "legendFormat": "{{client_name}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "min": 0,
+              "noValue": "Sem dados para este serviço",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 2,
+                "fillOpacity": 12,
+                "showPoints": "never",
+                "spanNulls": false,
+                "lineInterpolation": "smooth",
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "id": 19
+        }
+      ],
+      "id": 15
+    },
+    {
+      "type": "row",
+      "title": "JVM (memória, GC, threads)",
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 53
+      },
+      "panels": [
+        {
+          "type": "timeseries",
+          "title": "Uso de heap da JVM",
+          "description": "Heap usado sobre o máximo, por pod. Perto de 100 % indica risco de falta de memória.",
+          "gridPos": {
+            "x": 0,
+            "y": 54,
+            "w": 8,
+            "h": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "expr": "100 * sum by (instance) (jvm_memory_used_bytes{service_name=\"$service\",deployment_environment=\"$environment\",area=\"heap\"}) / sum by (instance) (jvm_memory_max_bytes{service_name=\"$service\",deployment_environment=\"$environment\",area=\"heap\"})",
+              "refId": "A",
+              "range": true,
+              "instant": false,
+              "format": "time_series",
+              "legendFormat": "{{instance}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "min": 0,
+              "noValue": "Sem dados para este serviço",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 2,
+                "fillOpacity": 12,
+                "showPoints": "never",
+                "spanNulls": false,
+                "lineInterpolation": "smooth",
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "line"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 80
+                  },
+                  {
+                    "color": "red",
+                    "value": 90
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "id": 21
+        },
+        {
+          "type": "timeseries",
+          "title": "Pausas de GC (p95)",
+          "description": "Duração p95 das pausas de GC.",
+          "gridPos": {
+            "x": 8,
+            "y": 54,
+            "w": 8,
+            "h": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(jvm_gc_pause_milliseconds_bucket{service_name=\"$service\",deployment_environment=\"$environment\"}[$__rate_interval])))",
+              "refId": "A",
+              "range": true,
+              "instant": false,
+              "format": "time_series",
+              "legendFormat": "p95"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "min": 0,
+              "noValue": "Sem dados para este serviço",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 2,
+                "fillOpacity": 12,
+                "showPoints": "never",
+                "spanNulls": false,
+                "lineInterpolation": "smooth",
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "id": 22
+        },
+        {
+          "type": "timeseries",
+          "title": "Threads da JVM",
+          "description": "Threads vivas por pod.",
+          "gridPos": {
+            "x": 16,
+            "y": 54,
+            "w": 8,
+            "h": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "expr": "sum by (instance) (jvm_threads_live{service_name=\"$service\",deployment_environment=\"$environment\"})",
+              "refId": "A",
+              "range": true,
+              "instant": false,
+              "format": "time_series",
+              "legendFormat": "{{instance}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "noValue": "Sem dados para este serviço",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 2,
+                "fillOpacity": 12,
+                "showPoints": "never",
+                "spanNulls": false,
+                "lineInterpolation": "smooth",
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "id": 23
+        }
+      ],
+      "id": 20
+    },
+    {
+      "type": "row",
+      "title": "Executores e acessos negados",
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 62
+      },
+      "panels": [
+        {
+          "type": "timeseries",
+          "title": "Threads ativas por executor",
+          "description": "Threads ativas por executor STOMP (messager).",
+          "gridPos": {
+            "x": 0,
+            "y": 63,
+            "w": 12,
+            "h": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "expr": "sum by (name) (executor_active{service_name=\"$service\",deployment_environment=\"$environment\"})",
+              "refId": "A",
+              "range": true,
+              "instant": false,
+              "format": "time_series",
+              "legendFormat": "{{name}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "min": 0,
+              "noValue": "Sem dados para este serviço",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 2,
+                "fillOpacity": 12,
+                "showPoints": "never",
+                "spanNulls": false,
+                "lineInterpolation": "smooth",
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "id": 25
+        },
+        {
+          "type": "timeseries",
+          "title": "Respostas 401 e 403",
+          "description": "Respostas 401 e 403 por segundo.",
+          "gridPos": {
+            "x": 12,
+            "y": 63,
+            "w": 12,
+            "h": 8
+          },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${DS_PROMETHEUS}"
+              },
+              "expr": "sum (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=\"$service\",status=~\"401|403\"}[$__rate_interval]))",
+              "refId": "A",
+              "range": true,
+              "instant": false,
+              "format": "time_series",
+              "legendFormat": "401/403"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "min": 0,
+              "noValue": "Sem dados para este serviço",
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "lineWidth": 2,
+                "fillOpacity": 12,
+                "showPoints": "never",
+                "spanNulls": false,
+                "lineInterpolation": "smooth",
+                "stacking": {
+                  "mode": "none",
+                  "group": "A"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              }
+            },
+            "overrides": []
+          },
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "id": 26
+        }
+      ],
+      "id": 24
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "DS_PROMETHEUS",
+        "label": "Métricas",
+        "type": "datasource",
+        "query": "prometheus",
+        "hide": 2,
+        "refresh": 1,
+        "current": {},
+        "options": [],
+        "regex": "",
+        "multi": false,
+        "includeAll": false
+      },
+      {
+        "name": "DS_LOKI",
+        "label": "Logs",
+        "type": "datasource",
+        "query": "loki",
+        "hide": 2,
+        "refresh": 1,
+        "current": {},
+        "options": [],
+        "regex": "",
+        "multi": false,
+        "includeAll": false
+      },
+      {
+        "name": "DS_TEMPO",
+        "label": "Traces",
+        "type": "datasource",
+        "query": "tempo",
+        "hide": 2,
+        "refresh": 1,
+        "current": {},
+        "options": [],
+        "regex": "",
+        "multi": false,
+        "includeAll": false
+      },
+      {
+        "name": "environment",
+        "label": "Ambiente",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "query": {
+          "query": "label_values(target_info, deployment_environment)",
+          "refId": "environment"
+        },
+        "definition": "label_values(target_info, deployment_environment)",
+        "refresh": 2,
+        "sort": 1,
+        "multi": false,
+        "includeAll": false,
+        "current": {},
+        "options": [],
+        "regex": ""
+      },
+      {
+        "name": "service",
+        "label": "Serviço",
+        "type": "custom",
+        "query": "auth,core,messager,api-notify",
+        "multi": false,
+        "includeAll": false,
+        "current": {
+          "selected": true,
+          "text": "auth",
+          "value": "auth"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "auth",
+            "value": "auth"
+          },
+          {
+            "selected": false,
+            "text": "core",
+            "value": "core"
+          },
+          {
+            "selected": false,
+            "text": "messager",
+            "value": "messager"
+          },
+          {
+            "selected": false,
+            "text": "api-notify",
+            "value": "api-notify"
+          }
+        ]
+      }
+    ]
+  }
+}

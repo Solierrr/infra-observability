@@ -1,0 +1,35 @@
+apiVersion: 1
+contactPoints:
+- orgId: 1
+  name: api-email-jira
+  receivers:
+  - uid: api-email-jira
+    type: webhook
+    disableResolveMessage: false
+    settings:
+      url: $__env{API_EMAIL_URL}/alerts/jira
+      httpMethod: POST
+      authorization_scheme: Bearer
+      authorization_credentials: $__env{API_EMAIL_KEY}
+- orgId: 1
+  name: api-email-email
+  receivers:
+  - uid: api-email-email
+    type: webhook
+    disableResolveMessage: false
+    settings:
+      url: $__env{API_EMAIL_URL}/alerts/email
+      httpMethod: POST
+      authorization_scheme: Bearer
+      authorization_credentials: $__env{API_EMAIL_KEY}
+- orgId: 1
+  name: api-email-whatsapp
+  receivers:
+  - uid: api-email-whatsapp
+    type: webhook
+    disableResolveMessage: true
+    settings:
+      url: $__env{API_EMAIL_URL}/alerts/whatsapp
+      httpMethod: POST
+      authorization_scheme: Bearer
+      authorization_credentials: $__env{API_EMAIL_KEY}

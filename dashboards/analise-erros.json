@@ -1,0 +1,1415 @@
+{
+  "uid": "solier-analise-erros",
+  "title": "SOLIER — Análise de erros",
+  "description": "O que está quebrando, onde e desde quando, em todos os serviços, inclusive erros que não aparecem como 5xx.",
+  "id": null,
+  "tags": [
+    "solier"
+  ],
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "graphTooltip": 1,
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "fiscalYearStartMonth": 0,
+  "liveNow": false,
+  "annotations": {
+    "list": []
+  },
+  "links": [
+    {
+      "type": "link",
+      "title": "Saúde geral",
+      "url": "/d/solier-saude-geral?${environment:queryparam}",
+      "icon": "dashboard",
+      "keepTime": true,
+      "includeVars": false,
+      "targetBlank": false,
+      "tooltip": "",
+      "tags": []
+    },
+    {
+      "type": "link",
+      "title": "Serviço Java",
+      "url": "/d/solier-servico-java?${environment:queryparam}",
+      "icon": "dashboard",
+      "keepTime": true,
+      "includeVars": false,
+      "targetBlank": false,
+      "tooltip": "",
+      "tags": []
+    },
+    {
+      "type": "link",
+      "title": "Serviço Python",
+      "url": "/d/solier-servico-python?${environment:queryparam}",
+      "icon": "dashboard",
+      "keepTime": true,
+      "includeVars": false,
+      "targetBlank": false,
+      "tooltip": "",
+      "tags": []
+    }
+  ],
+  "panels": [
+    {
+      "type": "row",
+      "title": "Visão do erro",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "panels": [],
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "Erros 5xx no período",
+      "description": "Respostas 5xx somadas de todos os serviços no intervalo selecionado.",
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "round(((sum (increase(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=~\"auth|core|messager|api-notify\",status=~\"5..\"}[$__range]))) or vector(0)) + ((sum (increase(http_server_duration_milliseconds_count{deployment_environment=\"$environment\",http_target!~\"/health\",service_name=~\"google-registry|api-recommendation|ai-accessibility|ai-validation\",http_status_code=~\"5..\"}[$__range]))) or vector(0)))",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          },
+          "noValue": "Sem dados",
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      },
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "Taxa de erros 5xx",
+      "description": "Percentual de respostas 5xx sobre o total. Amarelo a partir de 1 %, vermelho a partir de 5 %.",
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "100 * (((sum (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=~\"auth|core|messager|api-notify\",status=~\"5..\"}[$__rate_interval]))) or vector(0)) + ((sum (rate(http_server_duration_milliseconds_count{deployment_environment=\"$environment\",http_target!~\"/health\",service_name=~\"google-registry|api-recommendation|ai-accessibility|ai-validation\",http_status_code=~\"5..\"}[$__rate_interval]))) or vector(0))) / (((sum (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=~\"auth|core|messager|api-notify\"}[$__rate_interval]))) or vector(0)) + ((sum (rate(http_server_duration_milliseconds_count{deployment_environment=\"$environment\",http_target!~\"/health\",service_name=~\"google-registry|api-recommendation|ai-accessibility|ai-validation\"}[$__rate_interval]))) or vector(0))) and on() ((((sum (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=~\"auth|core|messager|api-notify\"}[$__rate_interval]))) or vector(0)) + ((sum (rate(http_server_duration_milliseconds_count{deployment_environment=\"$environment\",http_target!~\"/health\",service_name=~\"google-registry|api-recommendation|ai-accessibility|ai-validation\"}[$__rate_interval]))) or vector(0))) > 0)",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "noValue": "Sem dados",
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      },
+      "id": 3
+    },
+    {
+      "type": "stat",
+      "title": "Serviços com erro",
+      "description": "Serviços com taxa de erro 5xx de 1 % ou mais agora.",
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "count(((100 * (sum by (service_name) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=~\"auth|core|messager|api-notify\",status=~\"5..\"}[$__rate_interval])) or 0 * sum by (service_name) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=~\"auth|core|messager|api-notify\"}[$__rate_interval]))) / (sum by (service_name) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=~\"auth|core|messager|api-notify\"}[$__rate_interval])) > 0)) or (100 * (sum by (service_name) (rate(http_server_duration_milliseconds_count{deployment_environment=\"$environment\",http_target!~\"/health\",service_name=~\"google-registry|api-recommendation|ai-accessibility|ai-validation\",http_status_code=~\"5..\"}[$__rate_interval])) or 0 * sum by (service_name) (rate(http_server_duration_milliseconds_count{deployment_environment=\"$environment\",http_target!~\"/health\",service_name=~\"google-registry|api-recommendation|ai-accessibility|ai-validation\"}[$__rate_interval]))) / (sum by (service_name) (rate(http_server_duration_milliseconds_count{deployment_environment=\"$environment\",http_target!~\"/health\",service_name=~\"google-registry|api-recommendation|ai-accessibility|ai-validation\"}[$__rate_interval])) > 0))) >= 1) or vector(0)",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 3
+              }
+            ]
+          },
+          "noValue": "Sem dados",
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      },
+      "id": 4
+    },
+    {
+      "type": "stat",
+      "title": "Erros de negócio nos logs",
+      "description": "Linhas de log com PROVIDER_UNAVAILABLE (IA sem provedor) ou CORE_PROVISIONING_DLQ (usuário não provisionado) no intervalo. São falhas que a resposta HTTP não mostra.",
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 4
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "sum(count_over_time({deployment_environment=\"$environment\"} |~ \"PROVIDER_UNAVAILABLE|CORE_PROVISIONING_DLQ\" [$__range]))",
+          "refId": "A",
+          "queryType": "instant",
+          "maxLines": 200
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "locale",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              }
+            ]
+          },
+          "noValue": "Sem dados",
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "orientation": "auto"
+      },
+      "id": 5
+    },
+    {
+      "type": "row",
+      "title": "Quando e onde",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "panels": [],
+      "id": 6
+    },
+    {
+      "type": "timeseries",
+      "title": "Taxa de erros 5xx por serviço",
+      "description": "Taxa de erro 5xx por serviço. As linhas marcam 1 % e 5 %.",
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "((100 * (sum by (service_name) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=~\"auth|core|messager|api-notify\",status=~\"5..\"}[$__rate_interval])) or 0 * sum by (service_name) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=~\"auth|core|messager|api-notify\"}[$__rate_interval]))) / (sum by (service_name) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=~\"auth|core|messager|api-notify\"}[$__rate_interval])) > 0)) or (100 * (sum by (service_name) (rate(http_server_duration_milliseconds_count{deployment_environment=\"$environment\",http_target!~\"/health\",service_name=~\"google-registry|api-recommendation|ai-accessibility|ai-validation\",http_status_code=~\"5..\"}[$__rate_interval])) or 0 * sum by (service_name) (rate(http_server_duration_milliseconds_count{deployment_environment=\"$environment\",http_target!~\"/health\",service_name=~\"google-registry|api-recommendation|ai-accessibility|ai-validation\"}[$__rate_interval]))) / (sum by (service_name) (rate(http_server_duration_milliseconds_count{deployment_environment=\"$environment\",http_target!~\"/health\",service_name=~\"google-registry|api-recommendation|ai-accessibility|ai-validation\"}[$__rate_interval])) > 0)))",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "format": "time_series",
+          "legendFormat": "{{service_name}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "noValue": "Sem dados",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false,
+            "lineInterpolation": "smooth",
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "auth"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#4E79A7"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "core"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#F28E2B"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "messager"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#B07AA1"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "api-notify"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#9C755F"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "google-registry"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#76B7B2"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "api-recommendation"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#A0CBE8"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ai-accessibility"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D4A6C8"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ai-validation"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8C8C8C"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 7
+    },
+    {
+      "type": "timeseries",
+      "title": "Respostas 4xx e 5xx por status",
+      "description": "Respostas 4xx e 5xx por segundo, por código de status, de todos os serviços.",
+      "gridPos": {
+        "x": 12,
+        "y": 6,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum by (status) (sum by (status) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=~\"auth|core|messager|api-notify\",status=~\"[45]..\"}[$__rate_interval])) or label_replace(sum by (http_status_code) (rate(http_server_duration_milliseconds_count{deployment_environment=\"$environment\",http_target!~\"/health\",service_name=~\"google-registry|api-recommendation|ai-accessibility|ai-validation\",http_status_code=~\"[45]..\"}[$__rate_interval])), \"status\", \"$1\", \"http_status_code\", \"(.*)\"))",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "format": "time_series",
+          "legendFormat": "{{status}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0,
+          "noValue": "Sem dados",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false,
+            "lineInterpolation": "smooth",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "400"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#e0a800"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "401"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#f2c14e"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "404"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#b58900"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "409"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#f7d57a"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "500"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#d9534f"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "502"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#a63a3a"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "503"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#f08080"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 8
+    },
+    {
+      "type": "row",
+      "title": "Erros por rota",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "panels": [],
+      "id": 9
+    },
+    {
+      "type": "table",
+      "title": "Erros por serviço, rota e status",
+      "description": "Respostas 4xx e 5xx por serviço, rota e status no intervalo. Mostra também 401 de rota inexistente, que os serviços respondem antes de achar a rota.",
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 24,
+        "h": 9
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "round((sum by (service_name, route, status) (label_replace(sum by (service_name,uri,status) (increase(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=~\"auth|core|messager|api-notify\",status=~\"[45]..\"}[$__range])), \"route\", \"$1\", \"uri\", \"(.*)\")) or sum by (service_name, route, status) (label_replace(label_replace(sum by (service_name,http_target,http_status_code) (increase(http_server_duration_milliseconds_count{deployment_environment=\"$environment\",http_target!~\"/health\",service_name=~\"google-registry|api-recommendation|ai-accessibility|ai-validation\",http_status_code=~\"[45]..\"}[$__range])), \"route\", \"$1\", \"http_target\", \"(.*)\"), \"status\", \"$1\", \"http_status_code\", \"(.*)\"))) > 0)",
+          "refId": "A",
+          "range": false,
+          "instant": true,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Sem dados",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "sortBy": [
+          {
+            "displayName": "Respostas",
+            "desc": true
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "service_name": 0,
+              "route": 1,
+              "status": 2,
+              "Value": 3
+            },
+            "renameByName": {
+              "service_name": "Serviço",
+              "route": "Rota",
+              "status": "Status",
+              "Value": "Respostas"
+            }
+          }
+        }
+      ],
+      "id": 10
+    },
+    {
+      "type": "row",
+      "title": "Causas",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "panels": [],
+      "id": 11
+    },
+    {
+      "type": "timeseries",
+      "title": "Exceções Java por tipo",
+      "description": "Exceções por segundo nos serviços Java, por tipo (exclui requisições sem exceção).",
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 8,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "topk(8, sum by (exception) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=~\"auth|core|messager|api-notify\",exception!=\"none\"}[$__rate_interval])))",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "format": "time_series",
+          "legendFormat": "{{exception}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0,
+          "noValue": "Sem dados",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false,
+            "lineInterpolation": "smooth",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 12
+    },
+    {
+      "type": "timeseries",
+      "title": "Falhas de negócio nos logs",
+      "description": "Linhas de log por intervalo do gráfico com PROVIDER_UNAVAILABLE e CORE_PROVISIONING_DLQ, por serviço.",
+      "gridPos": {
+        "x": 8,
+        "y": 25,
+        "w": 8,
+        "h": 8
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "sum by (service_name) (count_over_time({deployment_environment=\"$environment\"} |= \"PROVIDER_UNAVAILABLE\" [$__interval]))",
+          "refId": "A",
+          "queryType": "range",
+          "maxLines": 200,
+          "legendFormat": "PROVIDER_UNAVAILABLE · {{service_name}}"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "sum by (service_name) (count_over_time({deployment_environment=\"$environment\"} |= \"CORE_PROVISIONING_DLQ\" [$__interval]))",
+          "refId": "B",
+          "queryType": "range",
+          "maxLines": 200,
+          "legendFormat": "CORE_PROVISIONING_DLQ · {{service_name}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "noValue": "Sem dados",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 2,
+            "fillOpacity": 70,
+            "showPoints": "never",
+            "spanNulls": false,
+            "lineInterpolation": "smooth",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 13
+    },
+    {
+      "type": "timeseries",
+      "title": "Respostas 401 por serviço",
+      "description": "Respostas 401 por segundo por serviço. Em vários serviços, 401 também aparece para rota inexistente.",
+      "gridPos": {
+        "x": 16,
+        "y": 25,
+        "w": 8,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "sum by (service_name) (rate(http_server_requests_milliseconds_count{deployment_environment=\"$environment\",uri!~\"/actuator.*\",service_name=~\"auth|core|messager|api-notify\",status=~\"401\"}[$__rate_interval])) or sum by (service_name) (rate(http_server_duration_milliseconds_count{deployment_environment=\"$environment\",http_target!~\"/health\",service_name=~\"google-registry|api-recommendation|ai-accessibility|ai-validation\",http_status_code=~\"401\"}[$__rate_interval]))",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "format": "time_series",
+          "legendFormat": "{{service_name}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0,
+          "noValue": "Sem dados",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "fillOpacity": 12,
+            "showPoints": "never",
+            "spanNulls": false,
+            "lineInterpolation": "smooth",
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "auth"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#4E79A7"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "core"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#F28E2B"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "messager"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#B07AA1"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "api-notify"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#9C755F"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "google-registry"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#76B7B2"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "api-recommendation"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#A0CBE8"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ai-accessibility"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#D4A6C8"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ai-validation"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#8C8C8C"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 14
+    },
+    {
+      "type": "row",
+      "title": "Investigação: logs e traces",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 33
+      },
+      "panels": [],
+      "id": 15
+    },
+    {
+      "type": "table",
+      "title": "Mensagens de erro mais frequentes",
+      "description": "As 10 mensagens de erro mais frequentes no intervalo (primeiros 60 caracteres da linha).",
+      "gridPos": {
+        "x": 0,
+        "y": 34,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "topk(10, sum by (service_name, msg) (count_over_time({deployment_environment=\"$environment\"} | severity_text=~\"(?i)error|fatal|critical\" | regexp \"^(?P<msg>.{0,60})\" [$__range])))",
+          "refId": "A",
+          "queryType": "instant",
+          "maxLines": 200
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Sem dados",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "sortBy": [
+          {
+            "displayName": "Ocorrências",
+            "desc": true
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "service_name": 0,
+              "msg": 1,
+              "Value #A": 2,
+              "Value": 2
+            },
+            "renameByName": {
+              "service_name": "Serviço",
+              "msg": "Mensagem",
+              "Value #A": "Ocorrências",
+              "Value": "Ocorrências"
+            }
+          }
+        }
+      ],
+      "id": 16
+    },
+    {
+      "type": "logs",
+      "title": "Logs de erro recentes",
+      "description": "Logs ERROR e FATAL mais recentes de todos os serviços.",
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 12,
+        "h": 10
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${DS_LOKI}"
+          },
+          "expr": "{deployment_environment=\"$environment\"} | severity_text=~\"(?i)error|fatal\"",
+          "refId": "A",
+          "queryType": "range",
+          "maxLines": 200
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showTime": true,
+        "wrapLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none",
+        "prettifyLogMessage": false,
+        "showLabels": false,
+        "showCommonLabels": false
+      },
+      "id": 17
+    },
+    {
+      "type": "table",
+      "title": "Traces com erro",
+      "description": "Traces com status de erro em qualquer serviço. Clique para abrir o trace completo.",
+      "gridPos": {
+        "x": 12,
+        "y": 42,
+        "w": 12,
+        "h": 10
+      },
+      "datasource": {
+        "type": "tempo",
+        "uid": "${DS_TEMPO}"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "${DS_TEMPO}"
+          },
+          "query": "{ resource.deployment.environment = \"$environment\" && status = error }",
+          "queryType": "traceql",
+          "refId": "A",
+          "limit": 20,
+          "tableType": "traces"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Sem dados"
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "id": 18
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "DS_PROMETHEUS",
+        "label": "Métricas",
+        "type": "datasource",
+        "query": "prometheus",
+        "hide": 2,
+        "refresh": 1,
+        "current": {},
+        "options": [],
+        "regex": "",
+        "multi": false,
+        "includeAll": false
+      },
+      {
+        "name": "DS_LOKI",
+        "label": "Logs",
+        "type": "datasource",
+        "query": "loki",
+        "hide": 2,
+        "refresh": 1,
+        "current": {},
+        "options": [],
+        "regex": "",
+        "multi": false,
+        "includeAll": false
+      },
+      {
+        "name": "DS_TEMPO",
+        "label": "Traces",
+        "type": "datasource",
+        "query": "tempo",
+        "hide": 2,
+        "refresh": 1,
+        "current": {},
+        "options": [],
+        "regex": "",
+        "multi": false,
+        "includeAll": false
+      },
+      {
+        "name": "environment",
+        "label": "Ambiente",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "query": {
+          "query": "label_values(target_info, deployment_environment)",
+          "refId": "environment"
+        },
+        "definition": "label_values(target_info, deployment_environment)",
+        "refresh": 2,
+        "sort": 1,
+        "multi": false,
+        "includeAll": false,
+        "current": {},
+        "options": [],
+        "regex": ""
+      }
+    ]
+  }
+}
