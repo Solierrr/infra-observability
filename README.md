@@ -1,29 +1,38 @@
-# Finalidade do repositório
+<p align="center">
+  <img src="./assets/readme/banners/grafana.png" alt="Grafana" width="100%">
+</p>
 
-Este repositório é o ponto de partida para novos serviços da Solaria. Ao criar um projeto a partir deste template, substitua os textos de exemplo, preencha as configurações da aplicação e mantenha a documentação alinhada ao que o serviço realmente oferece. Use `ARCHITECTURE.md` para registrar a organização do código, `RUNNING.md` para explicar como executar a aplicação e `DEPLOYMENT.md` para descrever seu deploy. O diretório `http/` reúne requisições de exemplo para chamar a API localmente durante o desenvolvimento.
+<p align="center">
+  <img src="./assets/readme/stacks/github-actions.png" width="100" hspace="8" alt="GitHub Actions" title="GitHub Actions">
+  <img src="./assets/readme/stacks/prometheus.png" width="100" hspace="8" alt="Prometheus" title="Prometheus">
+  <img src="./assets/readme/stacks/grafana-loki.png" width="100" hspace="8" alt="Grafana Loki" title="Grafana Loki">
+  <img src="./assets/readme/stacks/grafana-tempo.png" width="100" hspace="8" alt="Grafana Tempo" title="Grafana Tempo">
+  <img src="./assets/readme/stacks/infisical.png" width="100" hspace="8" alt="Infisical" title="Infisical">
+</p>
 
-## Estrutura inicial
+# Configuração de visualização operacional
 
-O molde é completo de propósito. Consulte a [matriz por tipo de repositório](https://github.com/Solierrr/docs-warehouse/blob/main/templates/README.md#matriz-por-tipo) e remova depois, no repositório novo, os arquivos que o seu tipo não usa.
+[![License](https://img.shields.io/github/license/Solierrr/infra-observability)](https://github.com/Solierrr/infra-observability/blob/main/LICENSE)
+[![GitHub Last Commit](https://img.shields.io/github/last-commit/Solierrr/infra-observability)](https://github.com/Solierrr/infra-observability/commits)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/Solierrr/infra-observability)](https://github.com/Solierrr/infra-observability/pulls)
+[![Release](https://img.shields.io/github/v/release/Solierrr/infra-observability)](https://github.com/Solierrr/infra-observability/releases)
 
-- `http/README.md`: convenções do cliente HTTP local.
-- `http/bruno.json`: manifesto da coleção Bruno.
-- `http/environments/local.bru`: ambiente local da API, com credenciais vazias.
-- `http/`: requisições `.bru` agrupadas em diretórios em inglês (`health/`, `authentication/`, `tasks/`).
-- `.dockerignore`: exclui segredos e arquivos locais do contexto de build da imagem.
-- `entrypoint.sh`: busca configuração no Infisical em runtime quando Universal Auth está configurado; sem essas credenciais, inicia diretamente o comando da imagem.
-- `Makefile`: comandos padrão da organização (`make help`); preencha o bloco "especifico deste repositorio" com os valores da stack, copiando o fragmento de `docs-warehouse/templates/make/`.
-- `.env.example`: nomes e valores de exemplo das variáveis necessárias; não inclua credenciais reais.
-- `Dockerfile`: ponto de partida para empacotar a aplicação.
+Este repositório está destinado à organização da visualização operacional da plataforma, mas sua main ainda contém a estrutura inicial de um serviço. A configuração que permite à equipe consultar métricas, registros e rastros está hoje mantida em outros repositórios de infraestrutura. Essa divisão precisa ser considerada ao localizar arquivos e planejar mudanças.
 
-## Cliente HTTP local
+A instância Grafana é descrita pelo GitOps, enquanto painéis e configuração de sua descoberta vêm do coletor de telemetria. Este repositório conserva arquivos de preparação, integração de configuração e workflows, sem uma aplicação ou imagem executável implementada. A definição do papel definitivo desse conjunto ainda depende do responsável.
 
-Abra `http/` como uma coleção Bruno e edite os arquivos `.bru` para incluir as rotas reais do serviço. Consulte [`http/README.md`](./http/README.md) para instruções e o template canônico em [`docs-warehouse/templates/http/`](https://github.com/Solierrr/docs-warehouse/tree/main/templates/http).
+## Aprofunde-se no Projeto!
 
-Antes de disponibilizar o repositório, substitua as descrições de exemplo e revise os links e comandos para refletir a stack escolhida.
+- [OVERVIEW.md](./docs/OVERVIEW.md), finalidade e regras de produto.
+- [ARCHITECTURE.md](./docs/ARCHITECTURE.md), componentes, dados e integrações.
+- [RUNNING.md](./docs/RUNNING.md), preparação e execução local.
+- [DEPLOY.md](./docs/DEPLOY.md), ambientes e publicação.
+- [STATUS.md](./docs/STATUS.md), limites observados.
+- [Fluxos](./flows/), etapas e casos de erro do repositório.
+- [PENDENCIAS.md](./PENDENCIAS.md), questões para revisão.
 
-## Inicialização da imagem no Render
+## Contribuindo
 
-O `entrypoint.sh` recebe o comando da aplicação definido no `CMD` do `Dockerfile`. Se `INFISICAL_CLIENT_ID` e `INFISICAL_CLIENT_SECRET` estiverem presentes em runtime, ele autentica via Universal Auth e inicia esse comando sob `infisical run`; caso contrário, executa-o diretamente com as variáveis já injetadas pela plataforma. O projeto padrão é o workspace Solaria e o ambiente padrão é `qa`; ambos podem ser substituídos por `INFISICAL_PROJECT_ID` e `INFISICAL_ENV`.
-
-Para ativar o caminho Infisical, instale o CLI na imagem runtime e configure as credenciais como variáveis de runtime do Render, nunca como argumentos ou variáveis de build. Quando o Render já fornecer os segredos diretamente, não configure as credenciais Universal Auth e o launcher apenas inicia a aplicação. Use um launcher específico quando o serviço precisar preparar arquivos ou fazer outra transformação antes de iniciar.
+- [CONTRIBUTING.md](https://github.com/Solierrr/.github/blob/main/.github/CONTRIBUTING.md), convenções de contribuição.
+- [CODE_OF_CONDUCT.md](https://github.com/Solierrr/.github/blob/main/CODE_OF_CONDUCT.md), código de conduta.
+- [SECURITY.md](https://github.com/Solierrr/.github/blob/main/SECURITY.md), relato de vulnerabilidades.
